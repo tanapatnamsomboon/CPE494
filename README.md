@@ -35,6 +35,11 @@ CPE494/
 ---
 
 ## 🕹️ Assignments Overview
+| Assignment  |             Key Concepts              |
+|:-----------:|:-------------------------------------:|
+|      0      | Vertex data, transformations, colors  |
+|      1      | Vertex shader animation, time uniform |
+|      2      |       Heightmap mesh, lighting        |
 
 ---
 
