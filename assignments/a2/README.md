@@ -25,4 +25,4 @@ Lighting and height scale can be adjusted in real-time via ImGui panel.
 
 ### 📜 Credits
 - `grass.jpg` texture: [Source](https://www.freepik.com/free-vector/grass-shape-background-design_893901.htm#fromView=keyword&page=1&position=5&uuid=242cc78f-5c82-4e55-afbe-5cad624d83f4&query=Grass+texture)
-- `heightmap.png` generated/credited to [Source](https://en.wikipedia.org/wiki/File:Heightmap.png)
+- `terrain.png` generated/credited to [Source](https://en.wikipedia.org/wiki/File:Heightmap.png)
