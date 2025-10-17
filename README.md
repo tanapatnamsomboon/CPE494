@@ -1,10 +1,10 @@
-# 🎮 3D Game Development Using C and OpenGL
+# 3D Game Development Using C and OpenGL
 
 This repository contains a series of assignments for the **3D Game Development** course, built with modern C++ and OpenGL.
 
 ---
 
-## 🧩 Structure
+## Structure
 ```
 CPE494/
 ├── CMakeLists.txt
@@ -18,7 +18,7 @@ CPE494/
 
 ---
 
-## 🧰 Dependencies
+## Dependencies
 
 - [glfw](https://www.glfw.org/)
 - [glad](https://glad.dav1d.de/)
@@ -30,11 +30,11 @@ CPE494/
 
 ---
 
-## ⚙️ Build Instructions
+## ⚙Build Instructions
 
 ---
 
-## 🕹️ Assignments Overview
+## Assignments Overview
 | Assignment  |             Key Concepts              |
 |:-----------:|:-------------------------------------:|
 |      0      | Vertex data, transformations, colors  |
@@ -43,7 +43,7 @@ CPE494/
 
 ---
 
-## 🧑‍💻 Author
+## Author
 
 **Tanapat Namsomboon 66070501022**<br>
 CPE494 – 3D Game Development Using C and OpenGL<br>
