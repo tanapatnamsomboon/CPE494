@@ -15,7 +15,7 @@ Lighting and height scale can be adjusted in real-time via ImGui panel.
 ![terrain](./screenshot.png)
 
 ### 🎥 Video Demo
-[▶ Watch 20-sec demo](https://youtu.be/civv6KfAhSQ)
+[▶ Watch 20-sec demo](https://youtu.be/G0GbmP_iqdc)
 
 ### 🧰 Tools
 - C++20 with OpenGL 4.6

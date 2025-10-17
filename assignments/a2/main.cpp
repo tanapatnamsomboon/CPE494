@@ -15,11 +15,12 @@ static Camera camera({ 0.0f, 80.0f, 200.0f });
 static float cameraSpeed = 10.0f;
 
 static bool panelActive = false;
-static bool autoSun = true;
+static bool autoSun = false;
 static float sunAngle = 45.0f;
 static float sunSpeed = 10.0f;
 static float sunDistance = 500.0f;
 static glm::vec3 sunColor = { 1.0f, 0.95f, 0.8f };
+static float sunIntensity = 1.0f;
 
 static float lastX = 400, lastY = 300;
 static bool firstMouse = true;
@@ -56,14 +57,15 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 460");
 
     Shader shader("shaders/terrain.vert", "shaders/terrain.frag");
-    Terrain terrain("assets/heightmaps/terrain.png", 15.0f);
-    Texture grass("assets/textures/grass.jpg");
+    Terrain terrain("assets/heightmaps/terrain_disp.png", 15.0f, false);
+    Texture grass("assets/textures/grass_diff.jpg");
 
     float heightScale = 15.0f;
+    float tiling = 1.0f;
 
     while (!glfwWindowShouldClose(window))
     {
-        float currentFrame = (float)glfwGetTime();
+        auto currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -93,9 +95,10 @@ int main()
 
         shader.SetVec3("uLightColor", sunColor);
         shader.SetVec3("uLightPos", lightPos);
-        shader.SetFloat("uLightIntensity", 1.0f);
+        shader.SetFloat("uLightIntensity", sunIntensity);
         shader.SetVec3("uViewPos", camera.Position);
         shader.SetFloat("uHeightScale", heightScale);
+        shader.SetFloat("uTiling", tiling);
 
         grass.Bind(0);
         shader.SetInt("uTexture", 0);
@@ -116,7 +119,9 @@ int main()
         ImGui::Checkbox("Auto Sun Movement", &autoSun);
         ImGui::SliderFloat("Sun Angle", &sunAngle, 0.0f, 360.0f);
         ImGui::SliderFloat("Sun Speed (deg/sec)", &sunSpeed, 0.0f, 60.0f);
+        ImGui::DragFloat("Sun Intensity", &sunIntensity, 0.005f, 0.0f, 5.0f);
         ImGui::SliderFloat("Height Scale", &heightScale, 1.0f, 50.0f);
+        ImGui::SliderFloat("Texture Tiling", &tiling, 1.0f, 50.0f);
         ImGui::SliderFloat("Camera Speed", &cameraSpeed, 1.0f, 100.0f);
         camera.MovementSpeed = cameraSpeed;
         ImGui::Text("Press [TAB] to toggle mouse/UI mode");

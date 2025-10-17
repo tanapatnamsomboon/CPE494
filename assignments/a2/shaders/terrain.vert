@@ -8,6 +8,7 @@ uniform mat4 uProjection;
 uniform mat4 uView;
 uniform mat4 uModel = mat4(1.0);
 uniform float uHeightScale;
+uniform float uTiling;
 
 out vec3 vFragPos;
 out vec3 vNormal;
@@ -20,7 +21,7 @@ void main()
 
     vFragPos = worldPos.xyz;
     vNormal  = normalize(mat3(transpose(inverse(uModel))) * aNormal);
-    vTex     = aTex;
+    vTex     = aTex * uTiling;
 
     gl_Position = uProjection * uView * worldPos;
 }

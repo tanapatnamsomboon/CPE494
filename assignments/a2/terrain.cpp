@@ -6,8 +6,8 @@
 #include <iostream>
 #include <algorithm>
 
-Terrain::Terrain(const std::string& heightmapPath, float heightScale)
-    : m_HeightScale(heightScale)
+Terrain::Terrain(const std::string& heightmapPath, float heightScale, bool invert)
+    : m_Inverted(invert), m_HeightScale(heightScale)
 {
     LoadHeightmap(heightmapPath);
     GenerateMesh();
@@ -32,6 +32,11 @@ void Terrain::SetHeightScale(float scale)
     m_HeightScale = scale;
 }
 
+void Terrain::SetInvert(bool invert)
+{
+    m_Inverted = invert;
+}
+
 void Terrain::LoadHeightmap(const std::string& path)
 {
     int channels;
@@ -42,20 +47,19 @@ void Terrain::LoadHeightmap(const std::string& path)
         return;
     }
 
-    int step = std::max(1, m_Width / 256);
-    int newW = m_Width / step;
-    int newH = m_Height / step;
-    m_Vertices.resize(newW * newH * 8);
+    m_Vertices.resize(m_Width * m_Height * 8);
 
     auto GetHeight = [&](int x, int z) -> float {
         x = std::clamp(x, 0, m_Width - 1);
         z = std::clamp(z, 0, m_Height - 1);
-        return data[z * m_Width + x] / 255.0f * m_HeightScale;
+        float h = data[z * m_Width + x] / 255.0f;
+        if (m_Inverted) h = 1.0f - h; // <-- พลิกกลับสูง/ต่ำ
+        return h * m_HeightScale;
     };
 
-    for (int z = 0; z < newH; ++z)
+    for (int z = 0; z < m_Height; ++z)
     {
-        for (int x = 0; x < newW; ++x)
+        for (int x = 0; x < m_Width; ++x)
         {
             int i = (z * m_Width + x) * 8;
             float y = GetHeight(x, z);
@@ -70,8 +74,8 @@ void Terrain::LoadHeightmap(const std::string& path)
             m_Vertices[i + 4] = 1.0f;
             m_Vertices[i + 5] = 0.0f;
 
-            m_Vertices[i + 6] = (float)x * 0.1f;
-            m_Vertices[i + 7] = (float)z * 0.1f;
+            m_Vertices[i + 6] = (float)x / (m_Width  - 1);
+            m_Vertices[i + 7] = (float)z / (m_Height - 1);
         }
     }
 
@@ -93,8 +97,6 @@ void Terrain::LoadHeightmap(const std::string& path)
         }
     }
 
-    m_Width = newW;
-    m_Height = newH;
     stbi_image_free(data);
 }
 
