@@ -53,7 +53,7 @@ void Terrain::LoadHeightmap(const std::string& path)
         x = std::clamp(x, 0, m_Width - 1);
         z = std::clamp(z, 0, m_Height - 1);
         float h = data[z * m_Width + x] / 255.0f;
-        if (m_Inverted) h = 1.0f - h; // <-- พลิกกลับสูง/ต่ำ
+        if (m_Inverted) h = 1.0f - h;
         return h * m_HeightScale;
     };
 
