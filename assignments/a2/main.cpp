@@ -114,7 +114,7 @@ int main()
 
         ImGui::SetNextWindowBgAlpha(alpha);
         ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, true);
-        ImGui::Begin("Terrain Controls");
+        ImGui::Begin("Terrain Controls", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::ColorEdit3("Sun Color", (float*)&sunColor);
         ImGui::Checkbox("Auto Sun Movement", &autoSun);
         ImGui::SliderFloat("Sun Angle", &sunAngle, 0.0f, 360.0f);
@@ -127,7 +127,6 @@ int main()
         ImGui::Text("Press [TAB] to toggle mouse/UI mode");
         ImGui::End();
         ImGui::PopItemFlag();
-
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
