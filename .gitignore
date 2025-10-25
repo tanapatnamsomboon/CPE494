@@ -5,6 +5,9 @@ out/
 bin/
 lib/
 
+# --- Visual Studio ---
+.vs/
+
 # --- CLion & JetBrains specific ---
 .idea/
 *.iml
@@ -50,11 +53,6 @@ Thumbs.db
 *.spv
 *.cache
 *.bin
-
-# --- Generated assets or runtime copy ---
-assignments/*/shaders/
-assignments/*/assets/
-!assets/
 
 # --- Python / VSCode ---
 __pycache__/
