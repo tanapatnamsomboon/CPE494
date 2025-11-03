@@ -149,7 +149,6 @@ void Game::ProcessInput()
     if (glm::length2(move) > 0.0f)
         move = glm::normalize(move);
 
-    m_Player->SetYaw(m_Camera->GetYaw());
     m_Player->Move(move, m_DeltaTime);
 }
 

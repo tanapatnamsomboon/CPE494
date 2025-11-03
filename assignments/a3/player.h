@@ -34,7 +34,8 @@ private:
     Model* m_Model;
     float m_Speed     = 2.5f;
     float m_Yaw       = 0.0f;
-    float m_TurnSpeed = 360.0f;
+    float m_TargetYaw = 0.0f;
+    float m_TurnSpeed = 8.0f;
     bool  m_IsMoving  = false;
 
     PlayerState m_State = PlayerState::Idle;

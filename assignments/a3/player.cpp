@@ -38,7 +38,16 @@ void Player::Draw(Shader& shader)
 void Player::Move(const glm::vec3& dir, float dt)
 {
     if (glm::length2(dir) > 1e-6f)
-    {;
+    {
+        const float targetYaw = glm::degrees(atan2(dir.x, dir.z));
+        m_TargetYaw = targetYaw;
+
+        float yawDiff = m_TargetYaw - m_Yaw;
+        if (yawDiff > 180.0f) yawDiff -= 360.0f;
+        if (yawDiff < -180.0f) yawDiff += 360.0f;
+
+        m_Yaw += yawDiff * glm::clamp(m_TurnSpeed * dt, 0.0f, 1.0f);
+
         m_Position += dir * m_Speed * dt;
 
         m_IsMoving = true;
