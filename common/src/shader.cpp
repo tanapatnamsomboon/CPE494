@@ -69,17 +69,17 @@ void Shader::Use() const
     glUseProgram(ID);
 }
 
-void Shader::SetBool(const std::string& name, bool value) const
+void Shader::SetBool(const std::string& name, const bool value) const
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void Shader::SetInt(const std::string& name, int value) const
+void Shader::SetInt(const std::string& name, const int value) const
 {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void Shader::SetFloat(const std::string& name, float value) const
+void Shader::SetFloat(const std::string& name, const float value) const
 {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
@@ -89,7 +89,19 @@ void Shader::SetVec3(const std::string& name, const glm::vec3& value) const
     glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
 }
 
-void Shader::SetMat4(const std::string& name, const glm::mat4& value) const
+void Shader::SetMat4(const std::string& name, const glm::mat4& value, const unsigned int count) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), (int)count, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::SetBoneMatrices(const std::vector<glm::mat4>& matrices) const
+{
+    for (int i = 0; i < matrices.size(); i++)
+        SetMat4("uBones[" + std::to_string(i) + "]", matrices[i]);
+}
+
+void Shader::SetIdentityBones(const int count) const
+{
+    for (int i = 0; i < count; i++)
+        SetMat4("uBones[" + std::to_string(i) + "]", glm::mat4(1.0f));
 }

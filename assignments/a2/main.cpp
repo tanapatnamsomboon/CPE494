@@ -57,8 +57,8 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 460");
 
     Shader shader("shaders/terrain.vert", "shaders/terrain.frag");
-    Terrain terrain("assets/heightmaps/terrain_disp.png", 15.0f, false);
-    Texture grass("assets/textures/grass_diff.jpg");
+    Terrain terrain("assets/terrain.png", 15.0f, false);
+    Texture grass("assets/grass.jpg");
 
     float heightScale = 15.0f;
     float tiling = 1.0f;
@@ -96,7 +96,7 @@ int main()
         shader.SetVec3("uLightColor", sunColor);
         shader.SetVec3("uLightPos", lightPos);
         shader.SetFloat("uLightIntensity", sunIntensity);
-        shader.SetVec3("uViewPos", camera.Position);
+        shader.SetVec3("uViewPos", camera.m_Position);
         shader.SetFloat("uHeightScale", heightScale);
         shader.SetFloat("uTiling", tiling);
 

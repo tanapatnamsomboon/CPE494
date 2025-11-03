@@ -60,3 +60,7 @@ __pycache__/
 
 # --- Backup files from editors ---
 *~
+
+# --- Blender ---
+*.blend
+*.blend1

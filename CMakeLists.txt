@@ -11,6 +11,7 @@ add_subdirectory(common)
 add_subdirectory(assignments/a0)
 add_subdirectory(assignments/a1)
 add_subdirectory(assignments/a2)
+add_subdirectory(assignments/a3)
 
 # [============================]
 #          Dependencies
@@ -75,3 +76,10 @@ target_include_directories(imgui
         ${imgui_SOURCE_DIR}
         ${imgui_SOURCE_DIR}/backends
 )
+
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp
+        GIT_TAG        master
+)
+FetchContent_MakeAvailable(assimp)

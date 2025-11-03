@@ -66,7 +66,9 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(posX, posY, 0.0f));
         model = glm::rotate(model, angle, glm::vec3(0, 0, 1));
-        shader.SetMat4("uTransform", model);
+        shader.SetMat4("uTransform", model,
+                       TODO
+        );
 
         switch (currentShape)
         {

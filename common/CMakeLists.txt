@@ -4,6 +4,13 @@ add_library(common STATIC
         src/camera.cpp
         src/utils.cpp
         src/shape.cpp
+        src/renderer.cpp
+        src/collision.cpp
+        src/model.cpp
+        src/mesh.cpp
+        src/animation.cpp
+        src/animator.cpp
+        src/bone.cpp
 )
 
 target_include_directories(common
@@ -16,4 +23,6 @@ target_link_libraries(common
         glad
         glm
         stb
+        PUBLIC
+        assimp
 )

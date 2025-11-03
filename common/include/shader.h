@@ -15,7 +15,10 @@ public:
     void SetInt(const std::string& name, int value) const;
     void SetFloat(const std::string& name, float value) const;
     void SetVec3(const std::string& name, const glm::vec3& value) const;
-    void SetMat4(const std::string& name, const glm::mat4& value) const;
+    void SetMat4(const std::string& name, const glm::mat4& value, unsigned int count = 1) const;
+
+    void SetBoneMatrices(const std::vector<glm::mat4>& matrices) const;
+    void SetIdentityBones(int count = 100) const;
 
 public:
     unsigned int ID;
