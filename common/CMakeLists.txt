@@ -11,6 +11,7 @@ add_library(common STATIC
         src/animation.cpp
         src/animator.cpp
         src/bone.cpp
+        src/model_manager.cpp
 )
 
 target_include_directories(common

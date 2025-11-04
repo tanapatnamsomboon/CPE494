@@ -11,9 +11,9 @@ public:
     virtual void Update(float /*dt*/) {}
     virtual void Draw(Shader& shader) = 0;
 
-    [[nodiscard]] glm::vec3 GetPosition() const { return m_Position; }
-    [[nodiscard]] glm::vec3 GetRotation() const { return m_Rotation; }
-    [[nodiscard]] glm::vec3 GetScale() const    { return m_Scale; }
+    [[nodiscard]] virtual const glm::vec3& GetPosition() const { return m_Position; }
+    [[nodiscard]] virtual const glm::vec3& GetRotation() const { return m_Rotation; }
+    [[nodiscard]] virtual const glm::vec3& GetScale() const    { return m_Scale; }
     void SetPosition(const glm::vec3& position) { m_Position = position; }
     void SetRotation(const glm::vec3& rotation) { m_Rotation = rotation; }
     void SetScale(const glm::vec3& scale)       { m_Scale = scale; }

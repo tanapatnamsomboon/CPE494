@@ -1,11 +1,17 @@
 add_executable(a3
-        main.cpp
-        game.cpp
-        player.cpp
-        object.cpp
-        entity/ground_plane.cpp
-        entity/static_object.cpp
-        follow_camera.cpp
+        src/main.cpp
+        src/game.cpp
+        src/player.cpp
+        src/object.cpp
+        src/entity/ground_plane.cpp
+        src/entity/static_object.cpp
+        src/follow_camera.cpp
+        src/systems/item_database.cpp
+        src/systems/inventory.cpp
+        src/entity/item_pickup.cpp
+        src/systems/item_spawner.cpp
+        src/systems/world_spawner.cpp
+        src/entity/gatherable.cpp
 )
 
 target_link_libraries(a3
@@ -16,6 +22,11 @@ target_link_libraries(a3
         glm
         stb
         imgui
+)
+
+target_include_directories(a3
+        PRIVATE
+        src
 )
 
 add_custom_target(copy_assets ALL
