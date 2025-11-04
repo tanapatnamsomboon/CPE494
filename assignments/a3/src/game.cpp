@@ -199,6 +199,10 @@ void Game::RenderScene()
     m_Shader.SetInt("shadowMap", 5);
     m_Shader.SetVec3("uLightColor", m_LightColor);
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
@@ -208,14 +212,12 @@ void Game::RenderScene()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
-
     std::ranges::sort(m_TransparentEntities,
                       [&](const auto& a, const auto& b) {
                           const float da = glm::length2(m_Camera->GetPosition() - a->GetPosition());
                           const float db = glm::length2(m_Camera->GetPosition() - b->GetPosition());
                           return da > db;
                       });
-
     for (const auto& e : m_TransparentEntities)
         e->Draw(m_Shader);
 
@@ -322,6 +324,7 @@ void Game::UpdateSunLight(float time)
     const float angle = glm::radians(dayTime * 360.0f - 90.0f);
 
     m_LightDir = glm::normalize(glm::vec3(cos(angle), -sin(angle), -0.4f));
+
     float daylight = glm::clamp(sin(angle), 0.0f, 1.0f);
     daylight = glm::pow(daylight, 0.6f);
 

@@ -80,7 +80,7 @@ unsigned int Shape::CreatePlane()
         -50.0f, 0.0f,  50.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
     };
 
-    const unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+    const unsigned int indices[] = { 0, 2, 1, 0, 3, 2 };
     unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
