@@ -9,6 +9,6 @@ uniform float uIntensity;
 void main()
 {
     float dist = length(TexCoord - vec2(0.5));
-    float glow = smoothstep(0.5, 0.0, dist);
+    float glow = smoothstep(0.5, 0.2, dist);
     FragColor = vec4(uColor * uIntensity * glow, glow);
 }

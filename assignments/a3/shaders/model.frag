@@ -62,6 +62,9 @@ void main()
     float specStrength = mix(0.2, 1.0, specTex);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0) * specStrength;
 
+    if (lightDir.y < 0.0)
+        diff = 0.0;
+
     float shadow = ShadowFactor(FragPos, norm, lightDir);
 
     vec3 ambient  = 0.2 * color;
