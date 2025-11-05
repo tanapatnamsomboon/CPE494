@@ -1,14 +1,10 @@
 #pragma once
 
 #include "player.h"
-#include "object.h"
 #include "animator.h"
 #include "follow_camera.h"
-#include "systems/item_database.h"
 #include "systems/inventory.h"
 #include "entity/item_pickup.h"
-#include <model.h>
-#include <texture.h>
 #include <shader.h>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -28,6 +24,7 @@ private:
     void Render();
     void RenderSun();
     void RenderScene();
+    void RenderShadowPass();
     void RenderUI();
 
     void ProcessInput();
@@ -38,7 +35,10 @@ private:
     void UpdateSunLight(float time);
 
     void InitShadowMap();
-    void RenderShadowPass();
+
+    void UpdateFps(float dt);
+    void UpdateWindowTitleFPS(float fps, float ms);
+    void RecreateShadowMap(int w, int h);
 
 private:
     GLFWwindow* m_Window;
@@ -55,6 +55,7 @@ private:
     std::shared_ptr<Player> m_Player;
     std::vector<std::shared_ptr<Entity>> m_OpaqueEntities;
     std::vector<std::shared_ptr<Entity>> m_TransparentEntities;
+    std::unique_ptr<Entity> m_Plane;
 
     Inventory m_Inventory{ 16 };
     std::vector<std::shared_ptr<ItemPickup>> m_Pickups;
@@ -72,8 +73,8 @@ private:
 
     unsigned int m_ShadowFBO{ 0 };
     unsigned int m_ShadowTex{ 0 };
-    int m_ShadowW{ 2048 };
-    int m_ShadowH{ 2048 };
+    int m_ShadowW{ 4096 };
+    int m_ShadowH{ 4096 };
 
     Shader m_Shader;
     Shader m_DepthShader;
@@ -83,4 +84,13 @@ private:
     glm::mat4 m_LightProj{ 1.0f };
     glm::mat4 m_LightVP{ 1.0f };
     float     m_ShadowBias{ 0.002f };
+
+    float m_VisibilityRange { 120.0f };
+    float m_ShadowCoverage  { 60.0f };
+    bool  m_AdaptiveShadow  { true };
+
+    double m_FpsAccum   { 0.0 };
+    double m_FpsTimer   { 0.0 };
+    int    m_FpsFrames  { 0 };
+    float  m_SmoothedMS { 0.0f };
 };
