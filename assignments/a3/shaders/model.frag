@@ -21,6 +21,11 @@ uniform vec2 uShadowMapSize;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 
+uniform vec3 uFogColor;
+uniform float uFogStart;
+uniform float uFogEnd;
+uniform float uFogDensity;
+
 float ShadowFactor(vec3 worldPos, vec3 normal, vec3 lightDir)
 {
     vec4 lightClip = uLightVP * vec4(worldPos, 1.0);
@@ -72,5 +77,11 @@ void main()
     vec3 specular = (1.0 - shadow) * 0.3 * spec * uLightColor;
 
     vec3 lighting = ambient + diffuse + specular;
-    FragColor = vec4(lighting, texColor.a);
+
+    float distance = length(uViewPos - FragPos);
+    float fogFactor = clamp((uFogEnd - distance) / (uFogEnd - uFogStart), 0.0, 1.0);
+    fogFactor = pow(fogFactor, uFogDensity);
+
+    vec3 finalColor = mix(uFogColor, lighting, fogFactor);
+    FragColor = vec4(finalColor, texColor.a);
 }
