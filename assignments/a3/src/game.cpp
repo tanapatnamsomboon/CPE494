@@ -58,10 +58,10 @@ Game::Game(GLFWwindow *window)
 
     ItemDatabase::Init();
 
-    auto playerModel = ModelManager::GetModel("assets/objects/survivor_male/survivor_male.fbx");
-    auto bottleModel = ModelManager::GetModel("assets/objects/bottle_0.fbx");
-    auto pineTreeModel = ModelManager::GetModel("assets/objects/pine_tree.fbx");
-    auto rockModel = ModelManager::GetModel("assets/objects/rock_0.fbx");
+    const auto playerModel = ModelManager::GetModel("assets/objects/survivor_male/survivor_male.fbx");
+    const auto bottleModel = ModelManager::GetModel("assets/objects/bottle_0.fbx");
+    const auto pineTreeModel = ModelManager::GetModel("assets/objects/pine_tree.fbx");
+    const auto rockModel = ModelManager::GetModel("assets/objects/rock_0.fbx");
 
     m_Player = std::make_shared<Player>(playerModel.get());
     m_Player->SetPosition({0, 0, 0});
@@ -198,6 +198,11 @@ void Game::RenderScene()
     glBindTexture(GL_TEXTURE_2D, m_ShadowTex);
     m_Shader.SetInt("shadowMap", 5);
     m_Shader.SetVec3("uLightColor", m_LightColor);
+
+    m_Shader.SetVec3("uFogColor", m_SkyColor);
+    m_Shader.SetFloat("uFogStart", 20.0f);
+    m_Shader.SetFloat("uFogEnd", 50.0f);
+    m_Shader.SetFloat("uFogDensity", 0.7f);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
