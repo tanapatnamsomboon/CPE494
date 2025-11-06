@@ -111,4 +111,4 @@ a3/
 ![terrain](./screenshot.png)
 
 ### Video Demo
-[▶ demo](./https://youtu.be/GHLUFsbHFzs)
+[▶ demo](https://youtu.be/GHLUFsbHFzs)
