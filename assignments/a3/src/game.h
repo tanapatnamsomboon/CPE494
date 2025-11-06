@@ -4,6 +4,7 @@
 #include "animator.h"
 #include "follow_camera.h"
 #include "systems/inventory.h"
+#include "systems/chunk_manager.h"
 #include "entity/item_pickup.h"
 #include <shader.h>
 #include <glad/gl.h>
@@ -52,8 +53,11 @@ private:
     float m_LastFrame{ 0.0f };
     float m_DeltaTime{ 0.0f };
 
+    std::unique_ptr<ChunkManager> m_Chunks;
+
     std::shared_ptr<Player> m_Player;
-    std::vector<std::shared_ptr<Entity>> m_Entities;
+    std::vector<std::shared_ptr<Entity>> m_StaticEntities;
+    std::vector<std::shared_ptr<Entity>> m_FrameEntities;
 
     Inventory m_Inventory{ 16 };
     std::vector<std::shared_ptr<ItemPickup>> m_Pickups;
@@ -71,19 +75,20 @@ private:
 
     unsigned int m_ShadowFBO{ 0 };
     unsigned int m_ShadowTex{ 0 };
-    int m_ShadowW{ 4096 };
-    int m_ShadowH{ 4096 };
+    int m_ShadowW{ 8192 };
+    int m_ShadowH{ 8192 };
 
     Shader m_ModelShader;
     Shader m_DepthShader;
     Shader m_SunShader;
+    Shader m_GroundShader;
 
     glm::mat4 m_LightView{ 1.0f };
     glm::mat4 m_LightProj{ 1.0f };
     glm::mat4 m_LightVP{ 1.0f };
-    float     m_ShadowBias{ 0.002f };
+    float     m_ShadowBias{ 0.0f };
 
-    float m_VisibilityRange { 120.0f };
+    float m_VisibilityRange { 80.0f };
     float m_ShadowCoverage  { 60.0f };
     bool  m_AdaptiveShadow  { true };
 
@@ -91,4 +96,6 @@ private:
     double m_FpsTimer   { 0.0 };
     int    m_FpsFrames  { 0 };
     float  m_SmoothedMS { 0.0f };
+
+    size_t m_StaticEntityCount{ 0 };
 };

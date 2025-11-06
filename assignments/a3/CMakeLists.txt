@@ -12,6 +12,7 @@ add_executable(a3
         src/systems/item_spawner.cpp
         src/systems/world_spawner.cpp
         src/entity/gatherable.cpp
+        src/systems/chunk_manager.cpp
 )
 
 target_link_libraries(a3

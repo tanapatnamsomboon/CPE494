@@ -7,7 +7,7 @@ StaticObject::StaticObject(Model *model, const glm::vec3& pos, const float radiu
 {
     m_Position = pos;
     m_HasCollision = true;
-    m_CollisionRadius = 1.0f;
+    m_CollisionRadius = 0.1f;
 
     m_RenderLayer = m_Model->HasTransparency() ? RenderLayer::AlphaCutout : RenderLayer::Opaque;
 }

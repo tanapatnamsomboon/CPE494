@@ -33,6 +33,7 @@ public:
 
     [[nodiscard]] virtual bool HasCollision() const { return m_HasCollision; }
     [[nodiscard]] virtual float GetCollisionRadius() const { return m_CollisionRadius; }
+    void SetCollisionRadius(float radius) { m_CollisionRadius = radius; }
 
 protected:
     glm::vec3 m_Position{ 0.0f };

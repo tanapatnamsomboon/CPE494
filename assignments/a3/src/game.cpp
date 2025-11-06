@@ -48,6 +48,7 @@ Game::Game(GLFWwindow *window)
     , m_ModelShader("shaders/model.vert", "shaders/model.frag")
     , m_DepthShader("shaders/depth.vert", "shaders/depth.frag")
     , m_SunShader("shaders/sun.vert", "shaders/sun.frag")
+    , m_GroundShader("shaders/ground.vert", "shaders/ground.frag")
 {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetWindowUserPointer(window, this);
@@ -68,22 +69,25 @@ Game::Game(GLFWwindow *window)
 
     m_Player = std::make_shared<Player>(playerModel.get());
     m_Player->SetPosition({0, 0, 0});
-    m_Entities.push_back(m_Player);
+    m_StaticEntities.push_back(m_Player);
+
+    m_Chunks = std::make_unique<ChunkManager>(80.0f, 2);
 
     const auto items = ItemSpawner::SpawnRandomItems(20, { 40, 40 }, 0.0f);
     for (auto& obj : items)
     {
         m_Pickups.push_back(obj);
-        m_Entities.push_back(obj);
+        m_StaticEntities.push_back(obj);
     }
 
     const auto environments = WorldSpawner::SpawnEnvironment(20, 15, 30, { 50, 50 });
     for (auto& obj : environments)
     {
-        m_Entities.push_back(obj);
+        m_StaticEntities.push_back(obj);
     }
 
-    m_Entities.push_back(std::make_unique<GroundPlane>("assets/textures/grass_ground_texture.png"));
+    m_StaticEntities.push_back(std::make_unique<GroundPlane>("assets/textures/grass_ground_texture.png"));
+    m_FrameEntities.reserve(m_StaticEntities.size() + 256);
 
     m_Camera = std::make_unique<FollowCamera>();
     m_Camera->SetAspect(1280.0f / 720.0f);
@@ -119,11 +123,31 @@ void Game::Run()
 
 void Game::OnUpdate(const float dt)
 {
-    UpdateSunLight((float)glfwGetTime());
+    UpdateSunLight((float)glfwGetTime() * 0.3f);
 
-    m_Player->HandleCollisions(m_Entities);
+    m_Chunks->Update(m_Player->GetPosition());
+    const auto& chunkEntities = m_Chunks->GetVisibleEntities();
 
-    for (const auto& e : m_Entities)
+    m_FrameEntities.clear();
+    m_FrameEntities.insert(m_FrameEntities.end(), m_StaticEntities.begin(), m_StaticEntities.end());
+    m_FrameEntities.insert(m_FrameEntities.end(), chunkEntities.begin(), chunkEntities.end());
+
+    {
+        const glm::vec3 p = m_Player->GetPosition();
+        for (const auto& e : m_StaticEntities)
+        {
+            if (e->GetRenderLayer() == RenderLayer::Ground)
+            {
+                const glm::vec3 current = e->GetPosition();
+                e->SetPosition({ p.x, current.y, p.z });
+                break;
+            }
+        }
+    }
+
+    m_Player->HandleCollisions(m_FrameEntities);
+
+    for (const auto& e : m_FrameEntities)
         e->Update(dt);
 
     m_Camera->SetTarget(m_Player->GetPosition());
@@ -203,42 +227,19 @@ void Game::RenderSun()
 
 void Game::RenderScene()
 {
-    m_ModelShader.Use();
-
     const glm::mat4 projection = m_Camera->GetProjectionMatrix();
     const glm::mat4 view = m_Camera->GetViewMatrix();
     const glm::vec3 camPos = m_Camera->GetPosition();
 
-    m_ModelShader.SetMat4("uProjection", projection);
-    m_ModelShader.SetMat4("uView", view);
-    m_ModelShader.SetVec3("uViewPos", m_Camera->GetPosition());
-
-    m_ModelShader.SetVec3("uLightDir", m_LightDir);
-    m_ModelShader.SetVec3("uLightColor", m_LightColor);
-    m_ModelShader.SetVec3("uAmbientColor", m_AmbientColor);
-
-    m_ModelShader.SetMat4("uLightVP", m_LightVP);
-    m_ModelShader.SetFloat("uShadowBias", m_ShadowBias);
-    m_ModelShader.SetVec2("uShadowMapSize", { m_ShadowW, m_ShadowH });
-
     glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D, m_ShadowTex);
-    m_ModelShader.SetInt("shadowMap", 5);
-    m_ModelShader.SetVec3("uLightColor", m_LightColor);
-
-    m_ModelShader.SetVec3("uFogColor", m_SkyColor);
-    m_ModelShader.SetFloat("uFogStart", 20.0f);
-    m_ModelShader.SetFloat("uFogEnd", 50.0f);
-    m_ModelShader.SetFloat("uFogDensity", 0.7f);
 
     const float maxDist2 = m_VisibilityRange * m_VisibilityRange;
     std::vector<std::shared_ptr<Entity>> visible[6];
-
-    for (const auto& e : m_Entities)
+    for (const auto& e : m_FrameEntities)
     {
         if (glm::length2(camPos - e->GetPosition()) > maxDist2)
             continue;
-
         visible[(int)e->GetRenderLayer()].push_back(e);
     }
 
@@ -247,40 +248,88 @@ void Game::RenderScene()
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    // Ground
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-    for (const auto& e : visible[(int)RenderLayer::Ground])  e->Draw(m_ModelShader);
+    {
+        m_GroundShader.Use();
+        m_GroundShader.SetMat4("uProjection", projection);
+        m_GroundShader.SetMat4("uView", view);
+        m_GroundShader.SetMat4("uLightVP", m_LightVP);
+        m_GroundShader.SetVec3("uLightDir", m_LightDir);
+        m_GroundShader.SetVec3("uLightColor", m_LightColor);
+        m_GroundShader.SetVec3("uAmbientColor", m_AmbientColor);
+        m_GroundShader.SetVec3("uFogColor", m_SkyColor);
+        m_GroundShader.SetFloat("uFogStart", 20.0f);
+        m_GroundShader.SetFloat("uFogEnd", 50.0f);
+        m_GroundShader.SetFloat("uFogDensity", 0.0f);
+        m_GroundShader.SetVec3("uViewPos", camPos);
+        m_GroundShader.SetFloat("uGroundUVScale", 0.24f);
+        m_GroundShader.SetInt("shadowMap", 5);
+        m_GroundShader.SetVec2("uShadowMapSize", { m_ShadowW, m_ShadowH });
+        m_GroundShader.SetFloat("uShadowBias", m_ShadowBias);
 
-    // AlphaCutout
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-    glEnable(GL_MULTISAMPLE);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-    for (const auto& e : visible[(int)RenderLayer::AlphaCutout]) e->Draw(m_ModelShader);
-    glEnable(GL_CULL_FACE);
-    glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
 
-    // Opaque
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-    for (const auto& e : visible[(int)RenderLayer::Opaque])  e->Draw(m_ModelShader);
+        for (const auto& e : visible[(int)RenderLayer::Ground])
+            e->Draw(m_GroundShader);
+    }
 
-    // Transparent
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthMask(GL_FALSE);
-    std::ranges::sort(visible[(int)RenderLayer::Transparent],
-        [&](auto& a, auto& b) {
-            const float da = glm::length2(camPos - a->GetPosition());
-            const float db = glm::length2(camPos - b->GetPosition());
-            return da > db;
-        });
+    {
+        m_ModelShader.Use();
 
-    for (const auto& e : visible[(int)RenderLayer::Transparent]) e->Draw(m_ModelShader);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
+        m_ModelShader.SetMat4("uProjection", projection);
+        m_ModelShader.SetMat4("uView", view);
+        m_ModelShader.SetVec3("uViewPos", camPos);
+
+        m_ModelShader.SetVec3("uLightDir", m_LightDir);
+        m_ModelShader.SetVec3("uLightColor", m_LightColor);
+        m_ModelShader.SetVec3("uAmbientColor", m_AmbientColor);
+
+        m_ModelShader.SetMat4("uLightVP", m_LightVP);
+        m_ModelShader.SetFloat("uShadowBias", m_ShadowBias);
+        m_ModelShader.SetVec2("uShadowMapSize", { m_ShadowW, m_ShadowH });
+
+        m_ModelShader.SetInt("shadowMap", 5);
+        m_ModelShader.SetVec3("uLightColor", m_LightColor);
+
+        m_ModelShader.SetVec3("uFogColor", m_SkyColor);
+        m_ModelShader.SetFloat("uFogStart", 20.0f);
+        m_ModelShader.SetFloat("uFogEnd", 50.0f);
+        m_ModelShader.SetFloat("uFogDensity", 0.7f);
+
+        // AlphaCutout
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+        glEnable(GL_MULTISAMPLE);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        for (const auto& e : visible[(int)RenderLayer::AlphaCutout]) e->Draw(m_ModelShader);
+        glEnable(GL_CULL_FACE);
+        glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+
+        // Opaque
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+        for (const auto& e : visible[(int)RenderLayer::Opaque])  e->Draw(m_ModelShader);
+
+        // Transparent
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDepthMask(GL_FALSE);
+        std::ranges::sort(visible[(int)RenderLayer::Transparent],
+            [&](auto& a, auto& b) {
+                const float da = glm::length2(camPos - a->GetPosition());
+                const float db = glm::length2(camPos - b->GetPosition());
+                return da > db;
+            });
+
+        constexpr size_t kMaxTransparent = 256;
+        auto& trans = visible[(int)RenderLayer::Transparent];
+        if (trans.size() > kMaxTransparent) trans.resize(kMaxTransparent);
+
+        for (const auto& e : trans) e->Draw(m_ModelShader);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+    }
 }
 
 void Game::RenderShadowPass()
@@ -306,8 +355,16 @@ void Game::RenderShadowPass()
     m_DepthShader.Use();
     m_DepthShader.SetMat4("uLightVP", m_LightVP);
 
-    for (const auto& e : m_Entities)
+    const float shadowRadius2 = (m_ShadowCoverage + 5.0f) * (m_ShadowCoverage + 5.0f);
+    for (const auto& e : m_FrameEntities)
+    {
+        const RenderLayer layer = e->GetRenderLayer();
+        if (layer == RenderLayer::Transparent) continue;
+        if (glm::length2(center - e->GetPosition()) > shadowRadius2) continue;
+        const bool alphaCut = e->GetRenderLayer() == RenderLayer::AlphaCutout;
+        m_DepthShader.SetBool("uAlphaCutout", alphaCut);
         e->Draw(m_DepthShader);
+    }
 
     glCullFace(GL_BACK);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
