@@ -53,9 +53,7 @@ private:
     float m_DeltaTime{ 0.0f };
 
     std::shared_ptr<Player> m_Player;
-    std::vector<std::shared_ptr<Entity>> m_OpaqueEntities;
-    std::vector<std::shared_ptr<Entity>> m_TransparentEntities;
-    std::unique_ptr<Entity> m_Plane;
+    std::vector<std::shared_ptr<Entity>> m_Entities;
 
     Inventory m_Inventory{ 16 };
     std::vector<std::shared_ptr<ItemPickup>> m_Pickups;
@@ -76,7 +74,7 @@ private:
     int m_ShadowW{ 4096 };
     int m_ShadowH{ 4096 };
 
-    Shader m_Shader;
+    Shader m_ModelShader;
     Shader m_DepthShader;
     Shader m_SunShader;
 

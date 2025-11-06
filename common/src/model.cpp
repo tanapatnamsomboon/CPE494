@@ -42,12 +42,13 @@ void Model::LoadModel(const std::string& path)
     ProcessNode(scene->mRootNode, scene);
 }
 
-void Model::ProcessNode(aiNode* node, const aiScene* scene)
+void Model::ProcessNode(const aiNode* node, const aiScene* scene)
 {
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        m_Meshes.push_back(ProcessMesh(mesh, scene));
+        Mesh processed = ProcessMesh(mesh, scene);
+        m_Meshes.push_back(processed);
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -97,7 +98,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             m_HasTransparency = true;
     }
 
-    PopulateBoneWeights(vertices, mesh, scene);
+    PopulateBoneWeights(vertices, mesh);
 
     return { vertices, indices, textures };
 }
@@ -124,7 +125,7 @@ void Model::AssignBoneWeight(Vertex& vertex, int boneId, float weight)
     }
 }
 
-void Model::PopulateBoneWeights(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* /*scene*/)
+void Model::PopulateBoneWeights(std::vector<Vertex>& vertices, aiMesh* mesh)
 {
     if (mesh->mNumBones == 0)
         return;
@@ -154,7 +155,7 @@ void Model::PopulateBoneWeights(std::vector<Vertex>& vertices, aiMesh* mesh, con
     }
 }
 
-unsigned int Model::TextureFromFile(const char* path, const std::string& directory)
+unsigned int Model::TextureFromFile(const char* path, TextureData& outTex)
 {
     const std::string filename = path;
 
@@ -177,16 +178,16 @@ unsigned int Model::TextureFromFile(const char* path, const std::string& directo
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         stbi_image_free(data);
 
-        TextureData info;
-        info.ID = textureID;
-        info.Type = "texture_diffuse";
-        info.Path = filename;
-        info.HasAlpha = hasAlpha;
+        outTex.ID = textureID;
+        outTex.Type = "texture_diffuse";
+        outTex.Path = filename;
+        outTex.HasAlpha = hasAlpha;
     }
     else
     {
         std::cerr << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
+        outTex.HasAlpha = false;
     }
 
     return textureID;
@@ -199,24 +200,25 @@ std::vector<TextureData> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureT
     {
         aiString str;
         mat->GetTexture(type, i, &str);
+
         bool skip = false;
         for(auto & m_LoadedTexture : m_LoadedTextures)
         {
             if(std::strcmp(m_LoadedTexture.Path.data(), str.C_Str()) == 0)
             {
                 textures.push_back(m_LoadedTexture);
-                skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
+                skip = true;
                 break;
             }
         }
         if(!skip)
-        {   // if texture hasn't been loaded already, load it
+        {
             TextureData texture;
-            texture.ID = TextureFromFile(str.C_Str(), m_Directory);
             texture.Type = typeName;
             texture.Path = str.C_Str();
+            TextureFromFile(str.C_Str(), texture);
             textures.push_back(texture);
-            m_LoadedTextures.push_back(texture);  // store it as texture loaded for an entire model, to ensure we won't unnecessarily load duplicate textures.
+            m_LoadedTextures.push_back(texture);
         }
     }
     return textures;

@@ -24,14 +24,14 @@ public:
 
 private:
     void LoadModel(const std::string& path);
-    void ProcessNode(aiNode* node, const aiScene* scene);
+    void ProcessNode(const aiNode* node, const aiScene* scene);
     Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
     std::vector<TextureData> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const std::string& typeName);
 
-    static unsigned int TextureFromFile(const char* path, const std::string& directory);
+    static unsigned int TextureFromFile(const char* path, TextureData& outTex);
     static void InitVertexBoneData(Vertex& vertex);
     static void AssignBoneWeight(Vertex& vertex, int boneId, float weight);
-    void PopulateBoneWeights(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
+    void PopulateBoneWeights(std::vector<Vertex>& vertices, aiMesh* mesh);
 
 private:
     std::vector<Mesh> m_Meshes;
@@ -41,7 +41,7 @@ private:
     glm::mat4 m_RootTransform;
 
     std::string m_Directory;
-    bool m_GammaCorrection = false;
-    bool m_HasTransparency = false;
-    int m_BoneCounter = 0;
+    bool m_GammaCorrection{ false };
+    bool m_HasTransparency{ false };
+    int m_BoneCounter{ 0 };
 };

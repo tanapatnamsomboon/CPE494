@@ -6,6 +6,10 @@ StaticObject::StaticObject(Model *model, const glm::vec3& pos, const float radiu
     : m_Model(model), m_Radius(radius)
 {
     m_Position = pos;
+    m_HasCollision = true;
+    m_CollisionRadius = 1.0f;
+
+    m_RenderLayer = m_Model->HasTransparency() ? RenderLayer::AlphaCutout : RenderLayer::Opaque;
 }
 
 void StaticObject::Draw(Shader& shader)

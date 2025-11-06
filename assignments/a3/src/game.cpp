@@ -45,14 +45,10 @@ static void CreateSunBillboard(GLuint& vao, GLuint& vbo, GLuint& ebo)
 
 Game::Game(GLFWwindow *window)
     : m_Window(window)
-    , m_Shader("shaders/model.vert", "shaders/model.frag")
+    , m_ModelShader("shaders/model.vert", "shaders/model.frag")
     , m_DepthShader("shaders/depth.vert", "shaders/depth.frag")
     , m_SunShader("shaders/sun.vert", "shaders/sun.frag")
 {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetWindowUserPointer(window, this);
     glfwSetCursorPosCallback(window, [](GLFWwindow* w, double xpos, double ypos) {
@@ -61,6 +57,7 @@ Game::Game(GLFWwindow *window)
     });
 
     glfwSwapInterval(1);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     ItemDatabase::Init();
 
@@ -71,22 +68,22 @@ Game::Game(GLFWwindow *window)
 
     m_Player = std::make_shared<Player>(playerModel.get());
     m_Player->SetPosition({0, 0, 0});
-    m_OpaqueEntities.push_back(m_Player);
+    m_Entities.push_back(m_Player);
 
-    auto spawned = ItemSpawner::SpawnRandomItems(20, { 40, 40 }, 0.0f);
-    for (auto& obj : spawned)
+    const auto items = ItemSpawner::SpawnRandomItems(20, { 40, 40 }, 0.0f);
+    for (auto& obj : items)
     {
         m_Pickups.push_back(obj);
-        m_OpaqueEntities.push_back(obj);
+        m_Entities.push_back(obj);
     }
 
-    auto environmentObjects = WorldSpawner::SpawnEnvironment(20, 15, 30, { 50, 50 });
-    for (auto& obj : environmentObjects)
+    const auto environments = WorldSpawner::SpawnEnvironment(20, 15, 30, { 50, 50 });
+    for (auto& obj : environments)
     {
-        m_OpaqueEntities.push_back(obj);
+        m_Entities.push_back(obj);
     }
 
-    m_Plane = std::make_unique<GroundPlane>("assets/textures/grass_ground_texture.png");
+    m_Entities.push_back(std::make_unique<GroundPlane>("assets/textures/grass_ground_texture.png"));
 
     m_Camera = std::make_unique<FollowCamera>();
     m_Camera->SetAspect(1280.0f / 720.0f);
@@ -124,10 +121,9 @@ void Game::OnUpdate(const float dt)
 {
     UpdateSunLight((float)glfwGetTime());
 
-    for (const auto& e : m_OpaqueEntities)
-        e->Update(dt);
+    m_Player->HandleCollisions(m_Entities);
 
-    for (const auto& e : m_TransparentEntities)
+    for (const auto& e : m_Entities)
         e->Update(dt);
 
     m_Camera->SetTarget(m_Player->GetPosition());
@@ -181,91 +177,110 @@ void Game::RenderSun()
     model[1][0] = view[0][1]; model[1][1] = view[1][1]; model[1][2] = view[2][1];
     model[2][0] = view[0][2]; model[2][1] = view[1][2]; model[2][2] = view[2][2];
     model = glm::scale(model, glm::vec3(20.0f));
-    const glm::mat4 mvp = proj * view * model;
 
+    const glm::mat4 mvp = proj * view * model;
     m_SunShader.SetMat4("uMVP", mvp);
     m_SunShader.SetVec3("uColor", m_LightColor);
     const float daylight = glm::clamp(
-        (float)sin(glm::radians(fmod(glfwGetTime(), 120.0f) / 120.0f * 360.0f + 90.0f)) * 0.5f + 0.5f,
+        (float)sin(glm::radians(fmod(glfwGetTime() + 30.0f, 120.0f) / 120.0f * 360.0f + 90.0f)) * 0.5f + 0.5f,
         0.0f, 1.0f
     );
     m_SunShader.SetFloat("uIntensity", 0.8f * daylight + 0.1f);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glDepthMask(GL_FALSE);
     glDepthFunc(GL_LEQUAL);
+
     glBindVertexArray(m_SunVAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+
     glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
 
 void Game::RenderScene()
 {
-    m_Shader.Use();
+    m_ModelShader.Use();
 
     const glm::mat4 projection = m_Camera->GetProjectionMatrix();
     const glm::mat4 view = m_Camera->GetViewMatrix();
     const glm::vec3 camPos = m_Camera->GetPosition();
 
-    m_Shader.SetMat4("uProjection", projection);
-    m_Shader.SetMat4("uView", view);
-    m_Shader.SetVec3("uViewPos", m_Camera->GetPosition());
+    m_ModelShader.SetMat4("uProjection", projection);
+    m_ModelShader.SetMat4("uView", view);
+    m_ModelShader.SetVec3("uViewPos", m_Camera->GetPosition());
 
-    m_Shader.SetVec3("uLightDir", m_LightDir);
-    m_Shader.SetVec3("uLightColor", m_LightColor);
-    m_Shader.SetVec3("uAmbientColor", m_AmbientColor);
+    m_ModelShader.SetVec3("uLightDir", m_LightDir);
+    m_ModelShader.SetVec3("uLightColor", m_LightColor);
+    m_ModelShader.SetVec3("uAmbientColor", m_AmbientColor);
 
-    m_Shader.SetMat4("uLightVP", m_LightVP);
-    m_Shader.SetFloat("uShadowBias", m_ShadowBias);
-    m_Shader.SetVec2("uShadowMapSize", { m_ShadowW, m_ShadowH });
+    m_ModelShader.SetMat4("uLightVP", m_LightVP);
+    m_ModelShader.SetFloat("uShadowBias", m_ShadowBias);
+    m_ModelShader.SetVec2("uShadowMapSize", { m_ShadowW, m_ShadowH });
 
     glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D, m_ShadowTex);
-    m_Shader.SetInt("shadowMap", 5);
-    m_Shader.SetVec3("uLightColor", m_LightColor);
+    m_ModelShader.SetInt("shadowMap", 5);
+    m_ModelShader.SetVec3("uLightColor", m_LightColor);
 
-    m_Shader.SetVec3("uFogColor", m_SkyColor);
-    m_Shader.SetFloat("uFogStart", 20.0f);
-    m_Shader.SetFloat("uFogEnd", 50.0f);
-    m_Shader.SetFloat("uFogDensity", 0.7f);
+    m_ModelShader.SetVec3("uFogColor", m_SkyColor);
+    m_ModelShader.SetFloat("uFogStart", 20.0f);
+    m_ModelShader.SetFloat("uFogEnd", 50.0f);
+    m_ModelShader.SetFloat("uFogDensity", 0.7f);
 
+    const float maxDist2 = m_VisibilityRange * m_VisibilityRange;
+    std::vector<std::shared_ptr<Entity>> visible[6];
+
+    for (const auto& e : m_Entities)
+    {
+        if (glm::length2(camPos - e->GetPosition()) > maxDist2)
+            continue;
+
+        visible[(int)e->GetRenderLayer()].push_back(e);
+    }
+
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    const float maxDist2 = m_VisibilityRange * m_VisibilityRange;
-
-    glEnable(GL_DEPTH_TEST);
+    // Ground
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
+    for (const auto& e : visible[(int)RenderLayer::Ground])  e->Draw(m_ModelShader);
 
-    m_Plane->Draw(m_Shader);
-    for (const auto& e : m_OpaqueEntities)
-    {
-        if (glm::length2(camPos - e->GetPosition()) <= maxDist2)
-            e->Draw(m_Shader);
-    }
+    // AlphaCutout
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+    glEnable(GL_MULTISAMPLE);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    for (const auto& e : visible[(int)RenderLayer::AlphaCutout]) e->Draw(m_ModelShader);
+    glEnable(GL_CULL_FACE);
+    glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 
+    // Opaque
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    for (const auto& e : visible[(int)RenderLayer::Opaque])  e->Draw(m_ModelShader);
+
+    // Transparent
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
-
-    std::vector<std::shared_ptr<Entity>> visibles;
-    visibles.reserve(m_TransparentEntities.size());
-    for (const auto& e : m_TransparentEntities) {
-        if (glm::length2(camPos - e->GetPosition()) <= maxDist2)
-            visibles.push_back(e);
-    }
-
-    std::ranges::sort(visibles,
-        [&](const auto& a, const auto& b) {
+    std::ranges::sort(visible[(int)RenderLayer::Transparent],
+        [&](auto& a, auto& b) {
             const float da = glm::length2(camPos - a->GetPosition());
             const float db = glm::length2(camPos - b->GetPosition());
             return da > db;
         });
 
-    for (const auto& e : visibles) e->Draw(m_Shader);
-
+    for (const auto& e : visible[(int)RenderLayer::Transparent]) e->Draw(m_ModelShader);
     glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
 
 void Game::RenderShadowPass()
@@ -291,9 +306,7 @@ void Game::RenderShadowPass()
     m_DepthShader.Use();
     m_DepthShader.SetMat4("uLightVP", m_LightVP);
 
-    for (const auto& e : m_OpaqueEntities)
-        e->Draw(m_DepthShader);
-    for (const auto& e : m_TransparentEntities)
+    for (const auto& e : m_Entities)
         e->Draw(m_DepthShader);
 
     glCullFace(GL_BACK);

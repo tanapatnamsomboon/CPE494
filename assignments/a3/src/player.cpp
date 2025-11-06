@@ -60,6 +60,34 @@ void Player::Move(const glm::vec3& dir, float dt)
     }
 }
 
+void Player::HandleCollisions(const std::vector<std::shared_ptr<Entity>>& entities)
+{
+    for (const auto& e : entities)
+    {
+        if (e.get() == this) continue;
+        if (!e->HasCollision()) continue;
+
+        const glm::vec3 pos = e->GetPosition();
+        const float r = e->GetCollisionRadius();
+
+        ResolveCollision(pos, r);
+    }
+}
+
+void Player::ResolveCollision(const glm::vec3& otherPos, float otherRadius)
+{
+    const glm::vec3 diff = m_Position - otherPos;
+    const float dist = glm::length(diff);
+    const float minDist = otherRadius + m_Radius;
+
+    if (dist < minDist && dist > 0.0001f)
+    {
+        const glm::vec3 pushDir = diff / dist;
+        const float penetration = minDist - dist;
+        m_Position += pushDir * penetration;
+    }
+}
+
 
 void Player::ChangeState(PlayerState state)
 {

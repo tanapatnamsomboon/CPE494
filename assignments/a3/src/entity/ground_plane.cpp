@@ -8,6 +8,10 @@ GroundPlane::GroundPlane(const std::string& texturePath)
 {
     m_VAO = Shape::CreatePlane();
     m_Texture = std::make_unique<Texture>(texturePath.c_str());
+
+    m_RenderLayer = RenderLayer::Ground;
+    m_HasCollision = true;
+    m_CollisionRadius = 0.0f;
 }
 
 void GroundPlane::Draw(Shader& shader)
